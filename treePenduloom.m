@@ -1,4 +1,5 @@
-function treePenduloom()
+function res = treePenduloom()
+% showSimulation and showSpeedPlot are bool
 clf;
 
 g = 9.81;        % m.s^-2    Gravity constant
@@ -6,14 +7,12 @@ g = 9.81;        % m.s^-2    Gravity constant
 m = 70;           % kg        Mass of thing
 l = 1;           % m         Length of rod
 simTime = 10;    % s         Simulation Time
-acrobatMass = 70;% kg
 
 %                    [th1; th2; th3; th3; velocities]
 initialDataDegrees = [178; -70; 190; 110; 0; 0; 0; 0]; % [theta1; theta2; theta3; theta1'; theta2'; theta3';]
-%initialDataDegrees = DegreesAndShit;
 
-initialDataDegrees = initialDataDegrees + [-90; -90; -90; -90; 0; 0; 0; 0];
-initialData = initialDataDegrees.*pi/180;   % Put it into rads
+                % Put it in the actual simulation's degrees then Put it into rads
+initialData = (initialDataDegrees + [-90; -90; -90; -90; 0; 0; 0; 0]).*pi/180;   
 
 %Rest  = [0; 90; 0; 0; 0; 0; 0; 0];
 %Straight Upside Down = [180; 0; 180; 180; 0; 0; 0; 0];
@@ -47,28 +46,32 @@ KineticE = (1/2).*l.^2.*m.*(5.*D1(:,5).^2+3.*D1(:,6).^2+D1(:,7).^2+ ...
 
 
 
-% Show simulation
-for i=1:length(T1)
-    clf;
-    %axis(minmax);
-    axis([-3, 3, -3, 3])
-    hold on; % to your butts
-    axis square;
-    
-    line([0, X1(i)], [0, Y1(i)]);           % Y is the vector in the x direction
-    line([X1(i), X2(i)], [Y1(i), Y2(i)]);
-    line([X2(i), X3(i)], [Y2(i), Y3(i)]);
-    line([X1(i), X4(i)], [Y1(i), Y4(i)]);
-    line([X4(i), X5(i)], [Y4(i), Y5(i)]);
-    
-    plot(X1(i), Y1(i), 'b.', 'MarkerSize', 20);
-    plot(X2(i), Y2(i), 'r.', 'MarkerSize', 20);
-    plot(X3(i), Y3(i), 'g.', 'MarkerSize', 20);
-    plot(X4(i), Y4(i), 'r.', 'MarkerSize', 20);
-    plot(X5(i), Y5(i), 'g.', 'MarkerSize', 20);
+%Show simulation
+if showSimulation 
+    for i=1:length(T1)
+        clf;
+        %axis(minmax);
+        axis([-3, 3, -3, 3])
+        hold on; % to your butts
+        axis square;
+        
+        line([0, X1(i)], [0, Y1(i)]);           % Y is the vector in the x direction
+        line([X1(i), X2(i)], [Y1(i), Y2(i)]);
+        line([X2(i), X3(i)], [Y2(i), Y3(i)]);
+        line([X1(i), X4(i)], [Y1(i), Y4(i)]);
+        line([X4(i), X5(i)], [Y4(i), Y5(i)]);
+        
+        plot(X1(i), Y1(i), 'b.', 'MarkerSize', 20);
+        plot(X2(i), Y2(i), 'r.', 'MarkerSize', 20);
+        plot(X3(i), Y3(i), 'g.', 'MarkerSize', 20);
+        plot(X4(i), Y4(i), 'r.', 'MarkerSize', 20);
+        plot(X5(i), Y5(i), 'g.', 'MarkerSize', 20);
+        
+        drawnow;
+    end
+end % if showSimulation
 
-    drawnow;
-end
+% Plot total trace
 plot([X1, X2, X3, X4, X5], [Y1, Y2, Y3, Y4, Y5])
 
 
@@ -78,7 +81,7 @@ plot([X1, X2, X3, X4, X5], [Y1, Y2, Y3, Y4, Y5])
 
 
 % Path in terms of velocity
-%UNCOMMENT ME PLZZZZ figure;
+figure;
 % Node 3 speed
 V3 = diff([X3, Y3], 1, 1);
 Speeds3 = sqrt(V3(:,1).^2+V3(:,2).^2);
@@ -93,35 +96,40 @@ Colors5 = [1-normalizedSpeeds5, normalizedSpeeds5, 1-normalizedSpeeds5];
 
 hold on % to your butts
 
-for i=1:length(T1)-1
-    axis([-3, 3, -3, 3])
+for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of + 
+    axis([-3, 3, -3, 3])    
     subplot(2,1,1)
-    plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :));
-    hold on
+    %plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :)); % Plot point
+    plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)
+    hold on 
     subplot(2,1,2)
     plot(X5(i), Y5(i), '.', 'Color', Colors5(i, :));
+    plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', (Colors5(i,:)+Colors5(i+1,:))./2)
+
     hold on
 end
 
 hold off
 
 speedCutoff = 0.05; % m.s^-1
-SlowLogical3 = Speeds3<speedCutoff;
+SlowLogical3 = Speeds3<speedCutoff; % Get a logical vector of all of the times under the cutoff.
 SlowLogical5 = Speeds5<speedCutoff;
 
-minw = min(Speeds3)
-maxw = max(Speeds3)
+% minw = min(Speeds3)
+% maxw = max(Speeds3)
 
 timeLengths = [getStreaks(SlowLogical3); getStreaks(SlowLogical5)];
 
-sumw = sum(timeLengths)
-meamw = mean(timeLengths)
-stdw = std(timeLengths)
+% sumw = sum(timeLengths)
+% meamw = mean(timeLengths)
+% stdw = std(timeLengths)
 %[mu,s,muci,sci] = normfit(timeLengths)
 
 %Plot normal distribution
-figure
-histfit(timeLengths)
+% figure
+% histfit(timeLengths)
+
+res = max(timeLengths);
 
 function Res = updateAngles(t, Angles)
         % Unwrap like it's xmas
@@ -353,40 +361,38 @@ function Res = updateAngles(t, Angles)
   theta2+(-2).*theta3+theta4)+(-1).*sin(pi+(-2).*theta1+(-1).* ...
   theta2+2.*theta3+theta4)))];
 
-
-  
-        
-end
+end %function Res = updateAngles(t, Angles)
 
 
 function Res = getStreaks(LogicalVector)
+    
+    Streaks = zeros(ceil(length(LogicalVector)/2), 1); % Largest streak vector (ie: [1 0 1 0 ... 0 1 0 1])
+    streakIDX = 1;
     
     if ~islogical(LogicalVector) % Return -1 if the vector is not logical
         Res = -1;
     end
     
-    if LogicalVector(1) == 0     % If the list starts with a 1, the following loop will 
-    	Streaks = [];
-    else
-        Streaks = [1];
-    end
+    if LogicalVector(1) ~= 0     % If the list starts with a 1, the following loop will miscount the first streak without this
+        Streaks(1) = 1;
+    end    
 
     for k = 2:length(LogicalVector)
         
             %New Streak
         if (LogicalVector(k-1) == 0 && LogicalVector(k) == 1)
-            Streaks = [Streaks; 1]; % Add 1 as a new elemet
+            Streaks(streakIDX+1) = 1; % Add 1 as a new elemet
+            streakIDX = streakIDX +1; % Move to the next spot
         
             %Next element is also a 1
         elseif (LogicalVector(k) == 1 && LogicalVector(k) == LogicalVector(k-1))
-            Streaks(end) = Streaks(end)+1; % Increment element
+            Streaks(streakIDX) = Streaks(streakIDX)+1; % Increment element at the 'end' position
         end
         
     end %for k = 2:length(LogicalVector)
-    Res = Streaks;
+    
+    Res = Streaks(Streaks ~= 0); %Don't return the residual zeros from the preallocation
 end %getStreaks()
-
-
 
 end
 
