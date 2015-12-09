@@ -44,7 +44,7 @@ if showSimulation
     for i=1:length(T1)
         clf;
         %axis(minmax);
-        axis([-3, 3, -3, 3])
+        axis([-3*l, 3*l, -3*l, 3*l])
         hold on; % to your butts
         axis square;
         
@@ -102,7 +102,7 @@ if showSpeedPlot
     hold on % to your butts
     
     for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of +
-        axis([-3, 3, -3, 3])
+        axis([-3*l, 3*l, -3*l, 3*l])
         subplot(2,1,1)
         plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :));                                        % Plot points
         plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)     % Plot lines
@@ -126,20 +126,40 @@ if showCutoffPlot
     hold on % to your butts
     
     for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of +
-        axis([-3, 3, -3, 3])
-        subplot(2,1,1)
+        axis([-3*l, 3*l, -3*l, 3*l])
+        %subplot(2,1,1)
         plot(X3(i), Y3(i), '.', 'Color', [1-SlowLogical3(i),0,SlowLogical3(i)]);                 % Plot points
         plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)     % Plot lines
-        hold on
-        subplot(2,1,2)
-        plot(X5(i), Y5(i), '.', 'Color', [1-SlowLogical5(i),0,SlowLogical5(i)]);
-        plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', (Colors5(i,:)+Colors5(i+1,:))./2)
+%         hold on
+%         subplot(2,1,2)
+%         plot(X5(i), Y5(i), '.', 'Color', [1-SlowLogical5(i),0,SlowLogical5(i)]);
+%         plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', [normalizedSpeeds5(i), 0, 1-normalizedSpeeds5(i)])
         
         hold on
     end
     
     hold off
 end
+
+% %Force on acrobats
+% %use diff twice on position vectors
+% figure;
+% subplot(2,1,1)
+% plot(T1, sqrt(X1.^2+Y1.^2))
+% subplot(2,1,2)
+% plot(T1(1:end-1), diff(sqrt(X1.^2+Y1.^2)))
+
+% %Acceleration calculation
+% figure;
+% A3 = diff([X3, Y3], 2, 1);
+% A5 = diff([X5, Y5], 2, 1);
+% % A3 = cumsum(abs(A3), 1);
+% % A5 = cumsum(abs(A5), 1);
+% plot(T1(1:end-2), m.*sqrt(A3(:,1).^2+A3(:,2).^2))
+% hold on % to your butts
+% plot(T1(1:end-2), m.*sqrt(A5(:,1).^2+A5(:,2).^2))
+% refline(0, 20*g)
+% hold off
 
 res = timeLengths*timeStep;
 
@@ -431,26 +451,9 @@ end
 % xlabel('Time')
 % ylabel('Energy')
 
-% Force on acrobats
-%use diff twice on position vectors
-% figure
-% subplot(2,1,1)
-% plot(T1, sqrt(X1.^2+Y1.^2))
-% subplot(2,1,2)
-% plot(T1(1:end-1), diff(sqrt(X1.^2+Y1.^2)))
 
-% Acceleration calculation
-% figure
-% V3 = diff([X3, Y3], 1, 1);
-% A3 = diff([X3, Y3], 2, 1);
-% A5 = diff([X5, Y5], 2, 1);
-% A3 = cumsum(abs(A3), 1);
-% A5 = cumsum(abs(A5), 1);
-% plot(T1(1:end-2), acrobatMass.*sqrt(A3(:,1).^2+A3(:,2).^2))
-% hold on % to your butts
-% plot(T1(1:end-2), acrobatMass.*sqrt(A5(:,1).^2+A5(:,2).^2))
-% refline(0, 20*g)
-% hold off
+
+
 
 
 % P1 = m*l*Y1;
