@@ -1,15 +1,18 @@
-function res = treePenduloom()
-% showSimulation and showSpeedPlot are bool
+function res = treePenduloom(Initial, showSimulation, showEnergy, showSpeedPlot, showCutoffPlot)
+% showSimulation, showEnergy and showSpeedPlot are bool
 clf;
 
-g = 9.81;        % m.s^-2    Gravity constant
-%g = 100
-m = 70;           % kg        Mass of thing
-l = 1;           % m         Length of rod
-simTime = 10;    % s         Simulation Time
+g = 9.81;           % m.s^-2    Gravity constant
+m = 70;             % kg        Mass of thing
+l = 1;              % m         Length of rod
+simTime = 10;       % s         Simulation Time
+timeStep = 0.02;    % s
+speedCutoff = 0.05; % m.s^-1
 
-%                    [th1; th2; th3; th3; velocities]
-initialDataDegrees = [178; -70; 190; 110; 0; 0; 0; 0]; % [theta1; theta2; theta3; theta1'; theta2'; theta3';]
+
+% %                    [th1; th2; th3; th5; velocities]
+% initialDataDegrees = [178; -70; 190; 110; 0; 0; 0; 0]; % [theta1; theta2; theta3; theta1'; theta2'; theta3';]
+initialDataDegrees = Initial;
 
                 % Put it in the actual simulation's degrees then Put it into rads
 initialData = (initialDataDegrees + [-90; -90; -90; -90; 0; 0; 0; 0]).*pi/180;   
@@ -18,9 +21,9 @@ initialData = (initialDataDegrees + [-90; -90; -90; -90; 0; 0; 0; 0]).*pi/180;
 %Straight Upside Down = [180; 0; 180; 180; 0; 0; 0; 0];
 %Inverted = [180; -90; 180; 180; 0; 0; 0; 0]
 %Just a good one = [178; -70; 190; 110; 0; 0; 0; 0];
-% Periodid = [30; 120; 30; 30; 0; 0; 0; 0]
+%Periodid = [30; 120; 30; 30; 0; 0; 0; 0]
 
-[T1, D1] = ode45(@updateAngles, 0:0.02:simTime, initialData);
+[T1, D1] = ode45(@updateAngles, 0:timeStep:simTime, initialData);
 
 Y1 = l*sin(D1(:,1));
 X1 = l*-cos(D1(:,1));
@@ -35,16 +38,6 @@ X5 = X4 - l*cos(D1(:,4));
 
 %minmax = [min([X1;X5]), max([X1;X5]), min([Y1;Y5]), max([Y1;Y5])];
 % Used for axes framing
-
-PotentialE = m*g*(Y1+Y2+Y3+Y4+Y5);
-KineticE = (1/2).*l.^2.*m.*(5.*D1(:,5).^2+3.*D1(:,6).^2+D1(:,7).^2+ ...
-  D1(:,8).^2+2.*D1(:,5).*(D1(:,6).*(2.*cos(D1(:,1)+(-1).* ...
-  D1(:,2))+cos(pi+(-1).*D1(:,1)+D1(:,2)))+D1(:,7).*cos(D1(:,1)+(-1).* ...
-  D1(:,3))+D1(:,8).*cos(D1(:,1)+(-1).*D1(:,4)))+2.*D1(:,6).*( ...
-  D1(:,7).*cos(D1(:,2)+(-1).*D1(:,3))+D1(:,8).*cos(pi+D1(:,2)+(-1) ...
-  .*D1(:,4))));
-
-
 
 %Show simulation
 if showSimulation 
@@ -69,19 +62,28 @@ if showSimulation
         
         drawnow;
     end
+    
+    % Plot total trace
+    % plot([X1, X2, X3, X4, X5], [Y1, Y2, Y3, Y4, Y5]) % plot everything
+    plot([X3, X5], [Y3, Y5]) % Plot ndoes 3 and 5 only
 end % if showSimulation
 
-% Plot total trace
-plot([X1, X2, X3, X4, X5], [Y1, Y2, Y3, Y4, Y5])
 
+if showEnergy
+    %Calculate energies (thx based mathematica)
+    PotentialE = m*g*(Y1+Y2+Y3+Y4+Y5);
+    KineticE = (1/2).*l.^2.*m.*(5.*D1(:,5).^2+3.*D1(:,6).^2+D1(:,7).^2+ ...
+        D1(:,8).^2+2.*D1(:,5).*(D1(:,6).*(2.*cos(D1(:,1)+(-1).* ...
+        D1(:,2))+cos(pi+(-1).*D1(:,1)+D1(:,2)))+D1(:,7).*cos(D1(:,1)+(-1).* ...
+        D1(:,3))+D1(:,8).*cos(D1(:,1)+(-1).*D1(:,4)))+2.*D1(:,6).*( ...
+        D1(:,7).*cos(D1(:,2)+(-1).*D1(:,3))+D1(:,8).*cos(pi+D1(:,2)+(-1) ...
+        .*D1(:,4))));
+    
+    figure;
+    %Adding total kinetic energy and potential energy
+    plot(T1, [PotentialE, KineticE, PotentialE+KineticE])
+end
 
-% figure;
-% %Adding total kinetic energy and potential energy
-% plot(T1, [PotentialE, KineticE, PotentialE+KineticE])
-
-
-% Path in terms of velocity
-figure;
 % Node 3 speed
 V3 = diff([X3, Y3], 1, 1);
 Speeds3 = sqrt(V3(:,1).^2+V3(:,2).^2);
@@ -94,42 +96,52 @@ Speeds5 = sqrt(V5(:,1).^2+V5(:,2).^2);
 normalizedSpeeds5 = Speeds5./repmat(max(Speeds5), size(Speeds5,2), 1);
 Colors5 = [1-normalizedSpeeds5, normalizedSpeeds5, 1-normalizedSpeeds5];
 
-hold on % to your butts
+% Path in terms of velocity
+if showSpeedPlot
+    figure;
+    hold on % to your butts
+    
+    for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of +
+        axis([-3, 3, -3, 3])
+        subplot(2,1,1)
+        plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :));                                        % Plot points
+        plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)     % Plot lines
+        hold on
+        subplot(2,1,2)
+        plot(X5(i), Y5(i), '.', 'Color', Colors5(i, :));
+        plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', (Colors5(i,:)+Colors5(i+1,:))./2)
+        
+        hold on
+    end
+    
+    hold off
+end %if showSpeedPlot
 
-for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of + 
-    axis([-3, 3, -3, 3])    
-    subplot(2,1,1)
-    %plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :)); % Plot point
-    plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)
-    hold on 
-    subplot(2,1,2)
-    plot(X5(i), Y5(i), '.', 'Color', Colors5(i, :));
-    plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', (Colors5(i,:)+Colors5(i+1,:))./2)
-
-    hold on
-end
-
-hold off
-
-speedCutoff = 0.05; % m.s^-1
 SlowLogical3 = Speeds3<speedCutoff; % Get a logical vector of all of the times under the cutoff.
 SlowLogical5 = Speeds5<speedCutoff;
+timeLengths = [getStreaks(SlowLogical3); getStreaks(SlowLogical5)]; % Not the best way to calculate, 
 
-% minw = min(Speeds3)
-% maxw = max(Speeds3)
+if showCutoffPlot
+    figure;
+    hold on % to your butts
+    
+    for i=1:length(T1)-2        % -2 since the colors are based on the velocities, of which there is one less of +
+        axis([-3, 3, -3, 3])
+        subplot(2,1,1)
+        plot(X3(i), Y3(i), '.', 'Color', [1-SlowLogical3(i),0,SlowLogical3(i)]);                 % Plot points
+        plot([X3(i), X3(i+1)], [Y3(i), Y3(i+1)], 'Color', (Colors3(i,:)+Colors3(i+1,:))./2)     % Plot lines
+        hold on
+        subplot(2,1,2)
+        plot(X5(i), Y5(i), '.', 'Color', [1-SlowLogical5(i),0,SlowLogical5(i)]);
+        plot([X5(i), X5(i+1)], [Y5(i), Y5(i+1)], 'Color', (Colors5(i,:)+Colors5(i+1,:))./2)
+        
+        hold on
+    end
+    
+    hold off
+end
 
-timeLengths = [getStreaks(SlowLogical3); getStreaks(SlowLogical5)];
-
-% sumw = sum(timeLengths)
-% meamw = mean(timeLengths)
-% stdw = std(timeLengths)
-%[mu,s,muci,sci] = normfit(timeLengths)
-
-%Plot normal distribution
-% figure
-% histfit(timeLengths)
-
-res = max(timeLengths);
+res = timeLengths*timeStep;
 
 function Res = updateAngles(t, Angles)
         % Unwrap like it's xmas
@@ -458,4 +470,16 @@ end
 % K5 = ((l.*D1(:,5).*cos(D1(:,1))+l.*D1(:,6).*cos(pi+D1(:,2))+l.* ...
 %   D1(:,8).*cos(D1(:,4))).^2+(l.*D1(:,5).*sin(D1(:,1))+l.* ...
 %   D1(:,6).*sin(pi+D1(:,2))+l.*D1(:,8).*sin(D1(:,4))).^2).^(1/2);
+
+
+% minw = min(Speeds3)
+% maxw = max(Speeds3)
+% sumw = sum(timeLengths)
+% meamw = mean(timeLengths)
+% stdw = std(timeLengths)
+%[mu,s,muci,sci] = normfit(timeLengths)
+
+%Plot normal distribution
+% figure
+% histfit(timeLengths)
 
