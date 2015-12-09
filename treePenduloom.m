@@ -1,34 +1,53 @@
 function treePenduloom()
+clf;
 
-g = 9.81;       % m.s^-2    Gravity constant
-m = 1000000;          % kg        Mass of thing
-l = 1;          % m         Length of rod
-simTime = 10;   % s         Simulation Time
+g = 9.81;        % m.s^-2    Gravity constant
+%g = 100
+m = 70;           % kg        Mass of thing
+l = 1;           % m         Length of rod
+simTime = 10;    % s         Simulation Time
+acrobatMass = 70;% kg
 
-initialDataDegrees = [10; -10; 10; 10; 0; 0; 0; 0]; % [theta1; theta2; theta3; theta1'; theta2'; theta3';]
+%                    [th1; th2; th3; th3; velocities]
+initialDataDegrees = [178; -70; 190; 110; 0; 0; 0; 0]; % [theta1; theta2; theta3; theta1'; theta2'; theta3';]
+%initialDataDegrees = DegreesAndShit;
+
+initialDataDegrees = initialDataDegrees + [-90; -90; -90; -90; 0; 0; 0; 0];
 initialData = initialDataDegrees.*pi/180;   % Put it into rads
-%initialData = [-.46; -1.2; 0; 0];
 
-[T1, D1] = ode45(@updateAngles, [0:0.02:simTime], initialData);
-%plot(T1, [D1(:,1) D1(:,2)])
-%plot(T1, D1(:,3))
+%Rest  = [0; 90; 0; 0; 0; 0; 0; 0];
+%Straight Upside Down = [180; 0; 180; 180; 0; 0; 0; 0];
+%Inverted = [180; -90; 180; 180; 0; 0; 0; 0]
+%Just a good one = [178; -70; 190; 110; 0; 0; 0; 0];
+% Periodid = [30; 120; 30; 30; 0; 0; 0; 0]
 
-X1 = l*sin(D1(:,1));
-Y1 = l*-cos(D1(:,1));
-X2 = X1 + l*sin(D1(:,2));
-Y2 = Y1 - l*cos(D1(:,2));
-X3 = X2 + l*sin(D1(:,3));
-Y3 = Y2 - l*cos(D1(:,3));
-X4 = X1 + l*sin(D1(:,2)+pi);
-Y4 = Y1 - l*cos(D1(:,2)+pi);
-X5 = X4 + l*sin(D1(:,4));
-Y5 = Y4 - l*cos(D1(:,4));
+[T1, D1] = ode45(@updateAngles, 0:0.02:simTime, initialData);
 
-minmax = [ min([Y1;Y5]), max([Y1;Y5]), min([X1;X5]), max([X1;X5])];
-                    % Used for axes framing
-                    
-                    
+Y1 = l*sin(D1(:,1));
+X1 = l*-cos(D1(:,1));
+Y2 = Y1 + l*sin(D1(:,2));
+X2 = X1 - l*cos(D1(:,2));
+Y3 = Y2 + l*sin(D1(:,3));
+X3 = X2 - l*cos(D1(:,3));
+Y4 = Y1 + l*sin(D1(:,2)+pi);
+X4 = X1 - l*cos(D1(:,2)+pi);
+Y5 = Y4 + l*sin(D1(:,4));
+X5 = X4 - l*cos(D1(:,4));
 
+%minmax = [min([X1;X5]), max([X1;X5]), min([Y1;Y5]), max([Y1;Y5])];
+% Used for axes framing
+
+PotentialE = m*g*(Y1+Y2+Y3+Y4+Y5);
+KineticE = (1/2).*l.^2.*m.*(5.*D1(:,5).^2+3.*D1(:,6).^2+D1(:,7).^2+ ...
+  D1(:,8).^2+2.*D1(:,5).*(D1(:,6).*(2.*cos(D1(:,1)+(-1).* ...
+  D1(:,2))+cos(pi+(-1).*D1(:,1)+D1(:,2)))+D1(:,7).*cos(D1(:,1)+(-1).* ...
+  D1(:,3))+D1(:,8).*cos(D1(:,1)+(-1).*D1(:,4)))+2.*D1(:,6).*( ...
+  D1(:,7).*cos(D1(:,2)+(-1).*D1(:,3))+D1(:,8).*cos(pi+D1(:,2)+(-1) ...
+  .*D1(:,4))));
+
+
+
+% Show simulation
 for i=1:length(T1)
     clf;
     %axis(minmax);
@@ -36,31 +55,73 @@ for i=1:length(T1)
     hold on; % to your butts
     axis square;
     
-    line([0, Y1(i)], [0, X1(i)]);           % Y is the vector in the x direction
-    line([Y1(i), Y2(i)], [X1(i), X2(i)]);
-    line([Y2(i), Y3(i)], [X2(i), X3(i)]);
-    line([Y1(i), Y4(i)], [X1(i), X4(i)]);
-    line([Y4(i), Y5(i)], [X4(i), X5(i)]);
+    line([0, X1(i)], [0, Y1(i)]);           % Y is the vector in the x direction
+    line([X1(i), X2(i)], [Y1(i), Y2(i)]);
+    line([X2(i), X3(i)], [Y2(i), Y3(i)]);
+    line([X1(i), X4(i)], [Y1(i), Y4(i)]);
+    line([X4(i), X5(i)], [Y4(i), Y5(i)]);
     
-    plot(Y1(i), X1(i), 'b.', 'MarkerSize', 20);
-    plot(Y2(i), X2(i), 'r.', 'MarkerSize', 20);
-    plot(Y3(i), X3(i), 'g.', 'MarkerSize', 20);
-    plot(Y4(i), X4(i), 'r.', 'MarkerSize', 20);
-    plot(Y5(i), X5(i), 'g.', 'MarkerSize', 20);
+    plot(X1(i), Y1(i), 'b.', 'MarkerSize', 20);
+    plot(X2(i), Y2(i), 'r.', 'MarkerSize', 20);
+    plot(X3(i), Y3(i), 'g.', 'MarkerSize', 20);
+    plot(X4(i), Y4(i), 'r.', 'MarkerSize', 20);
+    plot(X5(i), Y5(i), 'g.', 'MarkerSize', 20);
 
     drawnow;
 end
+plot([X1, X2, X3, X4, X5], [Y1, Y2, Y3, Y4, Y5])
 
-plot([Y1, Y2, Y3, Y4], [X1, X2, X3, X4])
 
-% axis([-2, 0 -2, 2])
-% 
-% comet(Y2, X2)
-% axis([-2, 2 -2, 0])
-% hold on
-% comet(Y1, X1)
-% axis([-2, 2 -2, 0])
-% hold off
+% figure;
+% %Adding total kinetic energy and potential energy
+% plot(T1, [PotentialE, KineticE, PotentialE+KineticE])
+
+
+% Path in terms of velocity
+%UNCOMMENT ME PLZZZZ figure;
+% Node 3 speed
+V3 = diff([X3, Y3], 1, 1);
+Speeds3 = sqrt(V3(:,1).^2+V3(:,2).^2);
+normalizedSpeeds3 = Speeds3./repmat(max(Speeds3), size(Speeds3,2), 1);
+Colors3 = [normalizedSpeeds3, zeros(length(normalizedSpeeds3), 1), 1-normalizedSpeeds3];
+
+% Node 5 speed
+V5 = diff([X5, Y5], 1, 1);
+Speeds5 = sqrt(V5(:,1).^2+V5(:,2).^2);
+normalizedSpeeds5 = Speeds5./repmat(max(Speeds5), size(Speeds5,2), 1);
+Colors5 = [1-normalizedSpeeds5, normalizedSpeeds5, 1-normalizedSpeeds5];
+
+hold on % to your butts
+
+for i=1:length(T1)-1
+    axis([-3, 3, -3, 3])
+    subplot(2,1,1)
+    plot(X3(i), Y3(i), '.', 'Color', Colors3(i, :));
+    hold on
+    subplot(2,1,2)
+    plot(X5(i), Y5(i), '.', 'Color', Colors5(i, :));
+    hold on
+end
+
+hold off
+
+speedCutoff = 0.05; % m.s^-1
+SlowLogical3 = Speeds3<speedCutoff;
+SlowLogical5 = Speeds5<speedCutoff;
+
+minw = min(Speeds3)
+maxw = max(Speeds3)
+
+timeLengths = [getStreaks(SlowLogical3); getStreaks(SlowLogical5)];
+
+sumw = sum(timeLengths)
+meamw = mean(timeLengths)
+stdw = std(timeLengths)
+%[mu,s,muci,sci] = normfit(timeLengths)
+
+%Plot normal distribution
+figure
+histfit(timeLengths)
 
 function Res = updateAngles(t, Angles)
         % Unwrap like it's xmas
@@ -73,15 +134,16 @@ function Res = updateAngles(t, Angles)
         theta3dot = Angles(7);
         theta4dot = Angles(8);
         
-        % g = g - 0.01;
+        % g = g - 0.005;
         
         % DiffyQs
+        
 %%%%%%%%%%%%%%%%
 %  ¯\_(?)_/¯  %
 %%%%%%%%%%%%%%%%
 
 	Res = [theta1dot; theta2dot; theta3dot; theta4dot; ...
-(-1).*l.^(-1).*((-1).*((-3).*cos(theta1+(-1).*theta2)+(-1).*cos( ... 
+  (-1).*l.^(-1).*((-1).*((-3).*cos(theta1+(-1).*theta2)+(-1).*cos( ... 
   pi+(-1).*theta1+theta2)+cos(theta1+theta2+(-2).*theta3)+cos(pi+ ... 
   theta1+theta2+(-2).*theta4)).^2+((-8)+cos(2.*(theta1+(-1).*theta3) ... 
   )+cos(2.*(theta1+(-1).*theta4))).*((-4)+cos(2.*(theta2+(-1).* ...
@@ -297,4 +359,97 @@ function Res = updateAngles(t, Angles)
 end
 
 
+function Res = getStreaks(LogicalVector)
+    
+    if ~islogical(LogicalVector) % Return -1 if the vector is not logical
+        Res = -1;
+    end
+    
+    if LogicalVector(1) == 0     % If the list starts with a 1, the following loop will 
+    	Streaks = [];
+    else
+        Streaks = [1];
+    end
+
+    for k = 2:length(LogicalVector)
+        
+            %New Streak
+        if (LogicalVector(k-1) == 0 && LogicalVector(k) == 1)
+            Streaks = [Streaks; 1]; % Add 1 as a new elemet
+        
+            %Next element is also a 1
+        elseif (LogicalVector(k) == 1 && LogicalVector(k) == LogicalVector(k-1))
+            Streaks(end) = Streaks(end)+1; % Increment element
+        end
+        
+    end %for k = 2:length(LogicalVector)
+    Res = Streaks;
+end %getStreaks()
+
+
+
 end
+
+
+
+% Shhhhhh
+
+% Cancer graph
+% subplot(2,1,1)
+% plot(T1, [P1, P2, P3, P4, P5])
+% title('Potential Energy')
+% xlabel('Time')
+% ylabel('Energy')
+% 
+% subplot(2,1,2)
+% plot(T1, [K1, K2, K3, K4, K5])
+% title('Kinetic Energy')
+% xlabel('Time')
+% ylabel('Energy')
+% 
+% subplot(3,1,3)
+% plot(T1, [PotentialE, KineticE, PotentialE+KineticE, P1+P2+P3+P4+P5+K2+K3+K4+K5])
+% title('Total Energy')
+% xlabel('Time')
+% ylabel('Energy')
+
+% Force on acrobats
+%use diff twice on position vectors
+% figure
+% subplot(2,1,1)
+% plot(T1, sqrt(X1.^2+Y1.^2))
+% subplot(2,1,2)
+% plot(T1(1:end-1), diff(sqrt(X1.^2+Y1.^2)))
+
+% Acceleration calculation
+% figure
+% V3 = diff([X3, Y3], 1, 1);
+% A3 = diff([X3, Y3], 2, 1);
+% A5 = diff([X5, Y5], 2, 1);
+% A3 = cumsum(abs(A3), 1);
+% A5 = cumsum(abs(A5), 1);
+% plot(T1(1:end-2), acrobatMass.*sqrt(A3(:,1).^2+A3(:,2).^2))
+% hold on % to your butts
+% plot(T1(1:end-2), acrobatMass.*sqrt(A5(:,1).^2+A5(:,2).^2))
+% refline(0, 20*g)
+% hold off
+
+
+% P1 = m*l*Y1;
+% P2 = m*l*Y2;
+% P3 = m*l*Y3;
+% P4 = m*l*Y4;
+% P5 = m*l*Y5;
+% 
+% K1 = l.^2.*m.*D1(:,5).^2;
+% K2 = ((l.*D1(:,5).*cos(D1(:,1))+l.*D1(:,6).*cos(D1(:,2))).^2+(l.* ...
+%   D1(:,5).*sin(D1(:,1))+l.*D1(:,6).*sin(D1(:,2))).^2).^(1/2);
+% K3 = ((l.*D1(:,5).*cos(D1(:,1))+l.*D1(:,6).*cos(D1(:,2))+l.* ...
+%   D1(:,7).*cos(D1(:,3))).^2+(l.*D1(:,5).*sin(D1(:,1))+l.* ...
+%   D1(:,6).*sin(D1(:,2))+l.*D1(:,7).*sin(D1(:,3))).^2).^(1/2);
+% K4 = ((l.*D1(:,5).*cos(D1(:,1))+l.*D1(:,6).*cos(D1(:,2))).^2+(l.* ...
+%   D1(:,5).*sin(D1(:,1))+l.*D1(:,6).*sin(D1(:,2))).^2).^(1/2);
+% K5 = ((l.*D1(:,5).*cos(D1(:,1))+l.*D1(:,6).*cos(pi+D1(:,2))+l.* ...
+%   D1(:,8).*cos(D1(:,4))).^2+(l.*D1(:,5).*sin(D1(:,1))+l.* ...
+%   D1(:,6).*sin(pi+D1(:,2))+l.*D1(:,8).*sin(D1(:,4))).^2).^(1/2);
+
